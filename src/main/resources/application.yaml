@@ -1,0 +1,113 @@
+spring:
+  profiles:
+    active: kafka-pause-resume
+    group:
+      "kafka": "kafka-listener,string-serde"
+      "kafka-ack": "kafka-listener-ack,string-serde"
+      "kafka-pause-resume": "kafka-listener-pause-resume,string-serde"
+      "kafka-json": "kafka-listener-json,json-serde"
+      "kafka-json-handler": "kafka-listener-json-handler,json-serde"
+      "kafka-json-type": "kafka-listener-json-type,json-serde"
+      "reactive-delay-until": "reactive-listener-delay-until,string-serde"
+      "reactive-do-on-next-profile": "reactive-listener-do-on-next,string-serde"
+      "reactive-subscribe-profile": "reactive-listener-subscribe,string-serde"
+
+spring.kafka:
+  bootstrap-servers: localhost:9092
+  consumer:
+    group-id: test-consumer
+    #properties.max.poll.interval.ms: 20000000
+    #max-poll-record: 20
+    #listener:
+      # ACK-MODE https://docs.spring.io/spring-kafka/api/org/springframework/kafka/listener/ContainerProperties.AckMode.html
+      #ack-mode: MANUAL_IMMEDIATE
+
+---
+spring.config.active.on-profile: json-serde
+
+spring.kafka:
+  - producer:
+      - key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      - value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+  - consumer:
+      - key-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      - value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+  - properties.spring.deserializer:
+      - key.delegate.class: org.apache.kafka.common.serialization.StringDeserializer
+      - value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
+
+---
+spring.config.active.on-profile: string-serde
+
+spring.kafka:
+  - consumer:
+      - key-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      - value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+  - producer:
+      - key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      - value-serializer: org.apache.kafka.common.serialization.StringSerializer
+  - properties.spring.deserializer:
+      - key.delegate.class: org.apache.kafka.common.serialization.StringDeserializer
+      - value.delegate.class: org.apache.kafka.common.serialization.StringDeserializer
+
+---
+spring.config.active.on-profile: kafka-listener
+
+kafka-consumer-type: KAFKA_LISTENER
+spring.kafka.consumer.max-poll-records: 20
+
+---
+spring.config.active.on-profile: kafka-listener-ack
+
+kafka-consumer-type: KAFKA_LISTENER_ACK
+spring.kafka:
+  - listener.ack-mode: MANUAL
+  - consumer.max-poll-records: 20
+
+---
+spring.config.active.on-profile: kafka-listener-pause-resume
+
+kafka-consumer-type: KAFKA_LISTENER_PAUSE_RESUME
+spring.kafka:
+  - listener.ack-mode: MANUAL
+  - consumer:
+      - max-poll-records: 1
+      - properties.max.poll.interval.ms: 5000
+
+---
+spring.config.active.on-profile: kafka-listener-json
+
+kafka-consumer-type: KAFKA_LISTENER_JSON
+
+---
+spring.config.active.on-profile: kafka-listener-json-handler
+
+kafka-consumer-type: KAFKA_LISTENER_JSON_HANDLER
+
+---
+spring.config.active.on-profile: kafka-listener-json-type
+
+kafka-consumer-type: KAFKA_LISTENER_JSON_TYPE
+spring.kafka:
+  - producer:
+      - properties.spring.json.add.type.headers: false
+  - consumer:
+      - properties.spring.json:
+          - use.type.headers: false
+          - trusted.packages: "*"
+          - value.default.type: com.github.tomasoberle.kafka.example.dto.TestDto
+
+---
+spring.config.active.on-profile: reactive-listener-delay-until
+
+kafka-consumer-type: REACTIVE_DELAY_UNTIL
+
+---
+spring.config.active.on-profile: reactive-listener-do-on-next
+
+kafka-consumer-type: REACTIVE_DO_ON_NEXT
+
+---
+spring.config.active.on-profile: reactive-listener-subscribe
+
+kafka-consumer-type: REACTIVE_SUBSCRIBE
